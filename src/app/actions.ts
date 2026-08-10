@@ -21,7 +21,7 @@ function normCompany(value: string): string {
 export async function getVolunteerNames(): Promise<VolunteerName[]> {
   const { data, error } = await supabaseServer
     .from("volunteers")
-    .select("id, full_name")
+    .select("id, full_name, team")
     .order("full_name", { ascending: true });
   if (error) throw new Error(error.message);
   return data ?? [];

@@ -1,6 +1,7 @@
 export type VolunteerName = {
   id: string;
   full_name: string;
+  team: string | null;
 };
 
 export type Shift = {
