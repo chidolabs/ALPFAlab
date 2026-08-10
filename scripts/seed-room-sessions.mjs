@@ -33,6 +33,7 @@ const ROOMS = {
 // [room, day, timeLabel, timeOrder(minutes since midnight), company, cpe]
 const MONDAY = 3; // day_order: Sat=1, Sun=2, Mon=3, Tue=4, Wed=5, Thu=6
 const TUESDAY = 4;
+const WEDNESDAY = 5;
 
 const ROWS = [
   // Monday: 11:30, 2:00, 3:30
@@ -110,9 +111,54 @@ const ROWS = [
 
   ["W208", TUESDAY, "11:00 AM", 660, "BoA-Legacy", false],
   ["W208", TUESDAY, "3:00 PM", 900, "FMR", false],
+
+  // Wednesday: 12:00 (top grid only has one Wednesday column)
+  ["E217", WEDNESDAY, "12:00 PM", 720, "CLA", false],
+  ["E218", WEDNESDAY, "12:00 PM", 720, "BoA-AI", false],
+  ["E219 A", WEDNESDAY, "12:00 PM", 720, "RBC PRO", false],
+  ["E219 BC", WEDNESDAY, "12:00 PM", 720, "C FF", false],
+  ["E219 D", WEDNESDAY, "12:00 PM", 720, "LFG PRO", false],
+  ["E221 A", WEDNESDAY, "12:00 PM", 720, "C C2C", false],
+
+  // --- Bottom grid: workshops/info sessions/receptions/activations by room ---
+  // No CPE shading in this section (all false). Room labels kept exactly as
+  // printed, including "W206B" (no space) here vs "W206 B" (with space) in
+  // the top grid — they may be the same physical room, but the two grids
+  // show conflicting sessions at the same Monday 11:30 AM slot, so they're
+  // NOT merged; flagged for the team to reconcile against the source sheet.
+  ["W209C", MONDAY, "11:30 AM", 690, "Film Screening", false],
+  ["W209C", TUESDAY, "10:40 AM", 640, "Jorge Ramos", false],
+  ["W209C", WEDNESDAY, "2:00 PM", 840, "Damian - Fireside", false],
+
+  ["E212A", TUESDAY, "11:00 AM", 660, "PWC", false],
+
+  ["E212C", MONDAY, "11:30 AM", 690, "Refugio Roundtable", false],
+  ["E212C", WEDNESDAY, "9:30 AM", 570, "Diaspora - Puerto Rico", false],
+
+  ["E220BC", MONDAY, "8:15 AM", 495, "Concierge", false],
+  ["E220BC", TUESDAY, "11:00 AM", 660, "Student Roundtable", false],
+
+  ["E220F", MONDAY, "8:15 AM", 495, "Fidelity", false],
+  ["E220F", TUESDAY, "12:30 PM", 750, "PWC", false],
+
+  ["E220E", MONDAY, "8:15 AM", 495, "Moody's", false],
+  ["E220E", MONDAY, "11:30 AM", 690, "Fidelity", false],
+  ["E220E", TUESDAY, "12:30 PM", 750, "Deloitte", false],
+
+  ["E220D", MONDAY, "7:30 AM", 450, "Fidelity Partners", false],
+  ["E220D", TUESDAY, "12:30 PM", 750, "Wells Fargo", false],
+  ["E220D", TUESDAY, "5:00 PM", 1020, "Alumni Cafecito", false],
+
+  ["E220A", MONDAY, "11:30 AM", 690, "Becker | Withum", false],
+  ["E220A", TUESDAY, "12:30 PM", 750, "KPMG", false],
+  ["E220A", TUESDAY, "5:00 PM", 1020, "Tony Curtis - Executive", false],
+
+  ["W206B", MONDAY, "11:30 AM", 690, "WOA", false],
+  ["W206B", MONDAY, "5:00 PM", 1020, "Boston - Trivia", false],
+  ["W206B", TUESDAY, "5:00 PM", 1020, "BofA", false],
 ];
 
-const DAY_LABELS = { [MONDAY]: "Monday", [TUESDAY]: "Tuesday" };
+const DAY_LABELS = { [MONDAY]: "Monday", [TUESDAY]: "Tuesday", [WEDNESDAY]: "Wednesday" };
 
 async function main() {
   const rows = ROWS.map(([room, dayOrder, timeLabel, timeOrder, company, cpe]) => ({
