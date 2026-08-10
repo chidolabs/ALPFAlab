@@ -63,6 +63,14 @@ export type KeyContact = {
   notes: string | null;
 };
 
+export type PartnershipTeamMember = {
+  id: string;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  sponsor_companies: string[];
+};
+
 export type ConfSession = {
   id: string;
   session: string;

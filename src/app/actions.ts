@@ -7,11 +7,14 @@ import type {
   KeyContact,
   PartnerLead,
   PartnershipAssignment,
+  PartnershipTeamMember,
   Shift,
   SponsorContact,
   VolunteerDetail,
   VolunteerName,
 } from "@/lib/types";
+
+const PARTNERSHIP_TEAM = "Partnership Support";
 
 export async function getVolunteerNames(): Promise<VolunteerName[]> {
   const { data, error } = await supabaseServer
@@ -99,6 +102,36 @@ export async function getPartnershipLeads(): Promise<PartnerLead[]> {
     if (!volunteer) return [];
     return [{ sponsor_company: a.sponsor_company, volunteer }];
   });
+}
+
+export async function getPartnershipTeamOverview(): Promise<PartnershipTeamMember[]> {
+  const { data: volunteers, error: volunteersError } = await supabaseServer
+    .from("volunteers")
+    .select("id, full_name, email, phone")
+    .eq("team", PARTNERSHIP_TEAM)
+    .order("full_name", { ascending: true });
+  if (volunteersError) throw new Error(volunteersError.message);
+  if (!volunteers || volunteers.length === 0) return [];
+
+  const { data: assignments, error: assignmentsError } = await supabaseServer
+    .from("partnership_assignments")
+    .select("volunteer_id, sponsor_company")
+    .in(
+      "volunteer_id",
+      volunteers.map((v) => v.id)
+    );
+  if (assignmentsError) throw new Error(assignmentsError.message);
+
+  const byVolunteer = new Map<string, string[]>();
+  for (const a of assignments ?? []) {
+    if (!byVolunteer.has(a.volunteer_id)) byVolunteer.set(a.volunteer_id, []);
+    byVolunteer.get(a.volunteer_id)!.push(a.sponsor_company);
+  }
+
+  return volunteers.map((v) => ({
+    ...v,
+    sponsor_companies: byVolunteer.get(v.id) ?? [],
+  }));
 }
 
 export async function getKeyContacts(): Promise<KeyContact[]> {

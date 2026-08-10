@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { companiesMatch } from "@/lib/company";
 import { formatPhone, telHref } from "@/lib/format";
@@ -37,6 +38,13 @@ export default function DirectoryView({
 
   return (
     <div className="flex flex-col gap-4">
+      <Link
+        href="/partnership-team"
+        className="text-sm font-medium text-blue-600 dark:text-blue-400"
+      >
+        View Partnership Team overview &rarr;
+      </Link>
+
       <input
         type="text"
         value={query}
