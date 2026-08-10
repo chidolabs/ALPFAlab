@@ -71,6 +71,18 @@ export type PartnershipTeamMember = {
   sponsor_companies: string[];
 };
 
+export type RoomSession = {
+  id: string;
+  room: string;
+  capacity: number | null;
+  day_order: number | null;
+  day_label: string | null;
+  time_label: string | null;
+  time_order: number | null;
+  company: string;
+  cpe: boolean;
+};
+
 export type ConfSession = {
   id: string;
   session: string;

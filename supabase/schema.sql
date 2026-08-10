@@ -75,6 +75,19 @@ create table if not exists key_contacts (
   created_at timestamptz not null default now()
 );
 
+create table if not exists room_sessions (
+  id uuid primary key default gen_random_uuid(),
+  room text not null,
+  capacity int,
+  day_order int,
+  day_label text,
+  time_label text,
+  time_order int,
+  company text not null,
+  cpe boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists shifts_volunteer_id_idx on shifts(volunteer_id);
 create index if not exists partnership_assignments_volunteer_id_idx on partnership_assignments(volunteer_id);
 create index if not exists volunteers_full_name_idx on volunteers(full_name);
@@ -89,3 +102,4 @@ alter table partnership_assignments enable row level security;
 alter table sponsor_contacts enable row level security;
 alter table conf_schedule enable row level security;
 alter table key_contacts enable row level security;
+alter table room_sessions enable row level security;

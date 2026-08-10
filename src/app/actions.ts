@@ -8,6 +8,7 @@ import type {
   PartnerLead,
   PartnershipAssignment,
   PartnershipTeamMember,
+  RoomSession,
   Shift,
   SponsorContact,
   VolunteerDetail,
@@ -173,6 +174,29 @@ export async function addKeyContact(input: {
     .single();
   if (error) throw new Error(error.message);
   return data;
+}
+
+export async function getRoomSessions(): Promise<RoomSession[]> {
+  const { data, error } = await supabaseServer
+    .from("room_sessions")
+    .select("id, room, capacity, day_order, day_label, time_label, time_order, company, cpe")
+    .order("day_order", { ascending: true })
+    .order("time_order", { ascending: true })
+    .order("room", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function getPartnerRoomSessions(volunteerId: string): Promise<RoomSession[]> {
+  const { data: assignments, error: assignmentsError } = await supabaseServer
+    .from("partnership_assignments")
+    .select("sponsor_company")
+    .eq("volunteer_id", volunteerId);
+  if (assignmentsError) throw new Error(assignmentsError.message);
+  if (!assignments || assignments.length === 0) return [];
+
+  const sessions = await getRoomSessions();
+  return sessions.filter((s) => assignments.some((a) => companiesMatch(a.sponsor_company, s.company)));
 }
 
 export async function getConfSchedule(): Promise<ConfSession[]> {

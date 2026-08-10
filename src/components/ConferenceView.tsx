@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { formatTime } from "@/lib/format";
 import type { ConfSession } from "@/lib/types";
@@ -43,6 +44,10 @@ export default function ConferenceView({ data }: { data: ConfSession[] }) {
 
   return (
     <div className="flex flex-col gap-4">
+      <Link href="/rooms" className="text-sm font-medium text-blue-600 dark:text-blue-400">
+        View Room Quick View &rarr;
+      </Link>
+
       <input
         type="text"
         value={query}

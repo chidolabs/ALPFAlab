@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { getVolunteerShifts } from "@/app/actions";
+import { getPartnerRoomSessions, getVolunteerShifts } from "@/app/actions";
 import { useVolunteer } from "@/components/VolunteerProvider";
 import NamePicker from "@/components/NamePicker";
 import { formatTime } from "@/lib/format";
-import type { Shift } from "@/lib/types";
+import type { RoomSession, Shift } from "@/lib/types";
 
 export default function ScheduleView() {
   const { selectedId } = useVolunteer();
   const [shifts, setShifts] = useState<Shift[]>([]);
+  const [partnerSessions, setPartnerSessions] = useState<RoomSession[]>([]);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [activeDay, setActiveDay] = useState<string | null>(null);
@@ -17,14 +18,19 @@ export default function ScheduleView() {
   useEffect(() => {
     if (!selectedId) {
       setShifts([]);
+      setPartnerSessions([]);
       return;
     }
     setError(null);
     setActiveDay(null);
     startTransition(async () => {
       try {
-        const result = await getVolunteerShifts(selectedId);
-        setShifts(result);
+        const [shiftResult, partnerResult] = await Promise.all([
+          getVolunteerShifts(selectedId),
+          getPartnerRoomSessions(selectedId),
+        ]);
+        setShifts(shiftResult);
+        setPartnerSessions(partnerResult);
       } catch {
         setError("Could not load your schedule. Please try again.");
       }
@@ -68,6 +74,28 @@ export default function ScheduleView() {
         <p className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
           No shifts assigned yet.
         </p>
+      )}
+
+      {partnerSessions.length > 0 && !isPending && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
+          <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+            Your partner sessions
+          </p>
+          <div className="mt-2 flex flex-col gap-1.5">
+            {partnerSessions.map((s) => (
+              <div key={s.id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="text-blue-800 dark:text-blue-300">
+                  {s.company} &middot; {s.day_label} {s.time_label} &middot; {s.room}
+                </span>
+                {s.cpe && (
+                  <span className="shrink-0 rounded-full bg-fuchsia-100 px-2 py-0.5 text-[10px] font-medium text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-300">
+                    CPE
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {days.length > 1 && (
