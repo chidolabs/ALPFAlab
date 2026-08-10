@@ -1,9 +1,9 @@
-import { getSponsorDirectory } from "@/app/actions";
+import { getPartnershipLeads, getSponsorDirectory } from "@/app/actions";
 import DirectoryView from "@/components/DirectoryView";
 
 export const dynamic = "force-dynamic";
 
 export default async function DirectoryPage() {
-  const data = await getSponsorDirectory();
-  return <DirectoryView data={data} />;
+  const [data, leads] = await Promise.all([getSponsorDirectory(), getPartnershipLeads()]);
+  return <DirectoryView data={data} leads={leads} />;
 }

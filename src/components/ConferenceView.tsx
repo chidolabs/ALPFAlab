@@ -7,6 +7,7 @@ import type { ConfSession } from "@/lib/types";
 export default function ConferenceView({ data }: { data: ConfSession[] }) {
   const [query, setQuery] = useState("");
   const [activeType, setActiveType] = useState<string | null>(null);
+  const [activeDay, setActiveDay] = useState<string | null>(null);
 
   const types = useMemo(() => {
     const set = new Set<string>();
@@ -14,10 +15,20 @@ export default function ConferenceView({ data }: { data: ConfSession[] }) {
     return [...set].sort();
   }, [data]);
 
+  const days = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of data) {
+      const label = s.day_label ?? "Other";
+      if (!map.has(label)) map.set(label, s.day_order ?? 999);
+    }
+    return [...map.entries()].sort((a, b) => a[1] - b[1]).map(([label]) => label);
+  }, [data]);
+
   const grouped = useMemo(() => {
     const q = query.trim().toLowerCase();
     const filtered = data.filter((s) => {
       if (activeType && s.type !== activeType) return false;
+      if (activeDay && (s.day_label ?? "Other") !== activeDay) return false;
       if (q && !s.session.toLowerCase().includes(q)) return false;
       return true;
     });
@@ -28,7 +39,7 @@ export default function ConferenceView({ data }: { data: ConfSession[] }) {
       map.get(key)!.push(s);
     }
     return [...map.entries()];
-  }, [data, query, activeType]);
+  }, [data, query, activeType, activeDay]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -40,6 +51,36 @@ export default function ConferenceView({ data }: { data: ConfSession[] }) {
         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
       />
 
+      {days.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveDay(null)}
+            className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+              activeDay === null
+                ? "bg-blue-600 text-white"
+                : "bg-white text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+            }`}
+          >
+            All days
+          </button>
+          {days.map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => setActiveDay(d === activeDay ? null : d)}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                activeDay === d
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+              }`}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -50,7 +91,7 @@ export default function ConferenceView({ data }: { data: ConfSession[] }) {
               : "bg-white text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
           }`}
         >
-          All
+          All categories
         </button>
         {types.map((t) => (
           <button

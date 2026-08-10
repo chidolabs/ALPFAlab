@@ -32,6 +32,16 @@ export type PartnershipAssignment = {
   contact: SponsorContact | null;
 };
 
+export type PartnerLead = {
+  sponsor_company: string;
+  volunteer: {
+    id: string;
+    full_name: string;
+    email: string | null;
+    phone: string | null;
+  };
+};
+
 export type VolunteerDetail = {
   id: string;
   full_name: string;

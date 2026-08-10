@@ -1,22 +1,16 @@
 "use server";
 
 import { supabaseServer } from "@/lib/supabase-server";
+import { companiesMatch } from "@/lib/company";
 import type {
   ConfSession,
+  PartnerLead,
   PartnershipAssignment,
   Shift,
   SponsorContact,
   VolunteerDetail,
   VolunteerName,
 } from "@/lib/types";
-
-function normCompany(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/\b(llp|llc|inc\.?|corp\.?|corporation|co\.?)\b/g, "")
-    .trim();
-}
 
 export async function getVolunteerNames(): Promise<VolunteerName[]> {
   const { data, error } = await supabaseServer
@@ -52,12 +46,8 @@ export async function getVolunteerDetail(
     if (contactsError) throw new Error(contactsError.message);
 
     partnerships = assignments.map((a) => {
-      const target = normCompany(a.sponsor_company);
       const contact =
-        (contacts ?? []).find((c) => {
-          const candidate = normCompany(c.company_name);
-          return candidate === target || candidate.includes(target) || target.includes(candidate);
-        }) ?? null;
+        (contacts ?? []).find((c) => companiesMatch(c.company_name, a.sponsor_company)) ?? null;
       return { sponsor_company: a.sponsor_company, contact };
     });
   }
@@ -87,6 +77,27 @@ export async function getSponsorDirectory(): Promise<SponsorContact[]> {
     .order("company_name", { ascending: true });
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+export async function getPartnershipLeads(): Promise<PartnerLead[]> {
+  const { data: assignments, error: assignmentsError } = await supabaseServer
+    .from("partnership_assignments")
+    .select("sponsor_company, volunteer_id");
+  if (assignmentsError) throw new Error(assignmentsError.message);
+  if (!assignments || assignments.length === 0) return [];
+
+  const { data: volunteers, error: volunteersError } = await supabaseServer
+    .from("volunteers")
+    .select("id, full_name, email, phone");
+  if (volunteersError) throw new Error(volunteersError.message);
+
+  const byId = new Map((volunteers ?? []).map((v) => [v.id, v]));
+
+  return assignments.flatMap((a) => {
+    const volunteer = byId.get(a.volunteer_id);
+    if (!volunteer) return [];
+    return [{ sponsor_company: a.sponsor_company, volunteer }];
+  });
 }
 
 export async function getConfSchedule(): Promise<ConfSession[]> {

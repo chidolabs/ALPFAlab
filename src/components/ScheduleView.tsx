@@ -12,6 +12,7 @@ export default function ScheduleView() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [activeDay, setActiveDay] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedId) {
@@ -19,6 +20,7 @@ export default function ScheduleView() {
       return;
     }
     setError(null);
+    setActiveDay(null);
     startTransition(async () => {
       try {
         const result = await getVolunteerShifts(selectedId);
@@ -29,15 +31,25 @@ export default function ScheduleView() {
     });
   }, [selectedId]);
 
+  const days = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of shifts) {
+      const label = s.day_label ?? "Other";
+      if (!map.has(label)) map.set(label, s.day_order ?? 999);
+    }
+    return [...map.entries()].sort((a, b) => a[1] - b[1]).map(([label]) => label);
+  }, [shifts]);
+
   const grouped = useMemo(() => {
     const map = new Map<string, Shift[]>();
     for (const s of shifts) {
       const key = s.day_label ?? "Other";
+      if (activeDay && key !== activeDay) continue;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(s);
     }
     return [...map.entries()];
-  }, [shifts]);
+  }, [shifts, activeDay]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -56,6 +68,36 @@ export default function ScheduleView() {
         <p className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
           No shifts assigned yet.
         </p>
+      )}
+
+      {days.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveDay(null)}
+            className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+              activeDay === null
+                ? "bg-blue-600 text-white"
+                : "border border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            }`}
+          >
+            All days
+          </button>
+          {days.map((day) => (
+            <button
+              key={day}
+              type="button"
+              onClick={() => setActiveDay(day === activeDay ? null : day)}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                activeDay === day
+                  ? "bg-blue-600 text-white"
+                  : "border border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              }`}
+            >
+              {day}
+            </button>
+          ))}
+        </div>
       )}
 
       {grouped.map(([day, dayShifts]) => (
