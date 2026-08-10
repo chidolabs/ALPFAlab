@@ -18,6 +18,11 @@ export default async function RoomsPage() {
           = CPE accredited
         </p>
       </div>
+      <p className="rounded-lg bg-fuchsia-50 px-3 py-2 text-xs text-fuchsia-800 dark:bg-fuchsia-950 dark:text-fuchsia-300">
+        CPE-accredited sessions require attendees to be scanned in AND out to
+        receive credit. Arrive at least 30 minutes before your scheduled
+        session.
+      </p>
       <RoomScheduleView data={data} />
     </div>
   );
