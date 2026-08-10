@@ -7,3 +7,4 @@ export async function hashPasscode(value: string): Promise<string> {
 }
 
 export const AUTH_COOKIE = "alpfa_auth";
+export const ADMIN_AUTH_COOKIE = "alpfa_admin_auth";
