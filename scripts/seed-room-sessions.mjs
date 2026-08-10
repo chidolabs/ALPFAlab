@@ -146,7 +146,8 @@ const ROWS = [
   ["E220E", MONDAY, "11:30 AM", 690, "Fidelity", false],
   ["E220E", TUESDAY, "12:30 PM", 750, "Deloitte", false],
 
-  ["E220D", MONDAY, "7:30 AM", 450, "Fidelity Partners", false],
+  ["E220D", MONDAY, "7:30 AM", 450, "Fidelity", false],
+  ["E220D", MONDAY, "8:15 AM", 495, "Partners", false],
   ["E220D", TUESDAY, "12:30 PM", 750, "Wells Fargo", false],
   ["E220D", TUESDAY, "5:00 PM", 1020, "Alumni Cafecito", false],
 

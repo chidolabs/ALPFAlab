@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CalendarDays, LayoutGrid, PhoneCall, UserRound, Users } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const TABS = [
-  { href: "/", label: "My Info", icon: "👤" },
-  { href: "/schedule", label: "Schedule", icon: "📅" },
-  { href: "/directory", label: "Directory", icon: "📇" },
-  { href: "/conference", label: "Sessions", icon: "🗂️" },
-  { href: "/contacts", label: "Contacts", icon: "📞" },
+  { href: "/", label: "My Info", icon: UserRound },
+  { href: "/schedule", label: "Schedule", icon: CalendarDays },
+  { href: "/directory", label: "Directory", icon: Users },
+  { href: "/conference", label: "Sessions", icon: LayoutGrid },
+  { href: "/contacts", label: "Contacts", icon: PhoneCall },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -33,17 +34,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-md justify-around">
           {TABS.map((tab) => {
             const active = pathname === tab.href;
+            const Icon = tab.icon;
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-medium ${
+                className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium ${
                   active
                     ? "text-blue-600 dark:text-blue-400"
                     : "text-slate-500 dark:text-slate-400"
                 }`}
               >
-                <span className="text-lg leading-none">{tab.icon}</span>
+                <Icon className="h-5 w-5" strokeWidth={2} />
                 {tab.label}
               </Link>
             );

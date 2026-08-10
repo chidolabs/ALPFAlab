@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { MapPin } from "lucide-react";
 import { getPartnerRoomSessions, getVolunteerShifts } from "@/app/actions";
 import { useVolunteer } from "@/components/VolunteerProvider";
 import NamePicker from "@/components/NamePicker";
@@ -235,8 +236,9 @@ function ShiftCard({ shift: s, highlight }: { shift: ShiftWithPartners; highligh
         <div className="mt-3 flex flex-col gap-1 border-t border-dashed border-slate-200 pt-2 dark:border-slate-700">
           {s.partnerMatches.map((p) => (
             <div key={p.id} className="flex items-center justify-between gap-2 text-sm">
-              <span className="text-blue-700 dark:text-blue-400">
-                📍 {p.company} &middot; {p.room} &middot; {p.time_label}
+              <span className="flex items-center gap-1 text-blue-700 dark:text-blue-400">
+                <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                {p.company} &middot; {p.room} &middot; {p.time_label}
               </span>
               {p.cpe && (
                 <span className="shrink-0 rounded-full bg-fuchsia-100 px-2 py-0.5 text-[10px] font-medium text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-300">
