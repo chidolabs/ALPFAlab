@@ -129,7 +129,7 @@ const CONTACTS = [
     notes: null,
   },
   {
-    area: "Venue Support",
+    area: "WIFI",
     name: "Karl Seeba",
     role: "General Manager, Smart City Networks",
     phone: "704-572-9358",
