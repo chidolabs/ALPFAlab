@@ -64,6 +64,17 @@ create table if not exists conf_schedule (
   created_at timestamptz not null default now()
 );
 
+create table if not exists key_contacts (
+  id uuid primary key default gen_random_uuid(),
+  area text not null,
+  name text not null,
+  role text,
+  phone text,
+  email text,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists shifts_volunteer_id_idx on shifts(volunteer_id);
 create index if not exists partnership_assignments_volunteer_id_idx on partnership_assignments(volunteer_id);
 create index if not exists volunteers_full_name_idx on volunteers(full_name);
@@ -77,3 +88,4 @@ alter table shifts enable row level security;
 alter table partnership_assignments enable row level security;
 alter table sponsor_contacts enable row level security;
 alter table conf_schedule enable row level security;
+alter table key_contacts enable row level security;

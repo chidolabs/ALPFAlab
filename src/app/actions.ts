@@ -4,6 +4,7 @@ import { supabaseServer } from "@/lib/supabase-server";
 import { companiesMatch } from "@/lib/company";
 import type {
   ConfSession,
+  KeyContact,
   PartnerLead,
   PartnershipAssignment,
   Shift,
@@ -98,6 +99,47 @@ export async function getPartnershipLeads(): Promise<PartnerLead[]> {
     if (!volunteer) return [];
     return [{ sponsor_company: a.sponsor_company, volunteer }];
   });
+}
+
+export async function getKeyContacts(): Promise<KeyContact[]> {
+  const { data, error } = await supabaseServer
+    .from("key_contacts")
+    .select("id, area, name, role, phone, email, notes")
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function addKeyContact(input: {
+  area: string;
+  name: string;
+  role?: string;
+  phone?: string;
+  email?: string;
+  notes?: string;
+}): Promise<KeyContact> {
+  const area = input.area.trim();
+  const name = input.name.trim();
+  if (!area || !name) throw new Error("Area and name are required.");
+
+  const phone = input.phone?.trim() || null;
+  const email = input.email?.trim() || null;
+  if (!phone && !email) throw new Error("Add a phone number or email.");
+
+  const { data, error } = await supabaseServer
+    .from("key_contacts")
+    .insert({
+      area,
+      name,
+      role: input.role?.trim() || null,
+      phone,
+      email,
+      notes: input.notes?.trim() || null,
+    })
+    .select("id, area, name, role, phone, email, notes")
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 export async function getConfSchedule(): Promise<ConfSession[]> {

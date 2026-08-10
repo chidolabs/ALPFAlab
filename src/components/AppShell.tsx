@@ -9,6 +9,7 @@ const TABS = [
   { href: "/schedule", label: "Schedule", icon: "📅" },
   { href: "/directory", label: "Directory", icon: "📇" },
   { href: "/conference", label: "Sessions", icon: "🗂️" },
+  { href: "/contacts", label: "Contacts", icon: "📞" },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {

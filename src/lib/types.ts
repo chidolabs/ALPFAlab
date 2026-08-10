@@ -53,6 +53,16 @@ export type VolunteerDetail = {
   partnerships: PartnershipAssignment[];
 };
 
+export type KeyContact = {
+  id: string;
+  area: string;
+  name: string;
+  role: string | null;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
+};
+
 export type ConfSession = {
   id: string;
   session: string;

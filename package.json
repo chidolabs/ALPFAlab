@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "import": "node --env-file=.env.local scripts/import-data.mjs"
+    "import": "node --env-file=.env.local scripts/import-data.mjs",
+    "seed-contacts": "node --env-file=.env.local scripts/seed-contacts.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.2",
