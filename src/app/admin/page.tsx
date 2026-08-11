@@ -1,22 +1,18 @@
-import { getVolunteerNames } from "@/app/actions";
-import AdminScheduleForm from "@/components/AdminScheduleForm";
+import RoomCoverageAdmin from "@/components/RoomCoverageAdmin";
 
-export const dynamic = "force-dynamic";
-
-export default async function AdminPage() {
-  const names = await getVolunteerNames();
-
+export default function AdminPage() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col gap-4 bg-slate-50 px-4 py-6 dark:bg-slate-950">
+    <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col gap-4 bg-slate-50 px-4 py-6 dark:bg-slate-950">
       <div>
         <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          Admin: Shift Assignments
+          Admin: Room Coverage
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Search a volunteer to add or remove shifts on their schedule.
+          Assign a volunteer to cover each room session. Unassigned sessions
+          show a suggested partner lead when there is one on file.
         </p>
       </div>
-      <AdminScheduleForm names={names} />
+      <RoomCoverageAdmin />
     </main>
   );
 }

@@ -15,6 +15,15 @@ export function dayOrderToDate(dayOrder: number | null, timeStr: string | null):
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+const ISO_DATE_TO_DAY_ORDER: Record<string, number> = Object.fromEntries(
+  Object.entries(DAY_ORDER_TO_ISO_DATE).map(([order, iso]) => [iso, Number(order)])
+);
+
+export function getTodayDayOrder(): number | null {
+  const todayIso = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  return ISO_DATE_TO_DAY_ORDER[todayIso] ?? null;
+}
+
 export function timeStringToMinutes(timeStr: string | null): number | null {
   if (!timeStr) return null;
   const [h, m] = timeStr.split(":").map(Number);

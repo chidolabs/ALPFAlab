@@ -4,6 +4,7 @@ import { supabaseServer } from "@/lib/supabase-server";
 import { companiesMatch } from "@/lib/company";
 import type {
   ConfSession,
+  DayVolunteer,
   KeyContact,
   PartnerLead,
   PartnershipAssignment,
@@ -179,12 +180,75 @@ export async function addKeyContact(input: {
 export async function getRoomSessions(): Promise<RoomSession[]> {
   const { data, error } = await supabaseServer
     .from("room_sessions")
-    .select("id, room, capacity, day_order, day_label, time_label, time_order, company, cpe")
+    .select(
+      "id, room, capacity, day_order, day_label, time_label, time_order, company, cpe, covering_volunteer_id, covering_volunteer_name"
+    )
     .order("day_order", { ascending: true })
     .order("time_order", { ascending: true })
     .order("room", { ascending: true });
   if (error) throw new Error(error.message);
-  return data ?? [];
+  const sessions = data ?? [];
+
+  const volunteerIds = [...new Set(sessions.map((s) => s.covering_volunteer_id).filter(Boolean))];
+  let volunteerMap = new Map<string, { id: string; full_name: string; phone: string | null; email: string | null }>();
+  if (volunteerIds.length > 0) {
+    const { data: vols, error: volsError } = await supabaseServer
+      .from("volunteers")
+      .select("id, full_name, phone, email")
+      .in("id", volunteerIds);
+    if (volsError) throw new Error(volsError.message);
+    volunteerMap = new Map((vols ?? []).map((v) => [v.id, v]));
+  }
+
+  return sessions.map((s) => ({
+    ...s,
+    covering_volunteer: s.covering_volunteer_id ? volunteerMap.get(s.covering_volunteer_id) ?? null : null,
+  }));
+}
+
+export async function getVolunteersActiveOnDay(dayOrder: number): Promise<DayVolunteer[]> {
+  const { data: shifts, error: shiftsError } = await supabaseServer
+    .from("shifts")
+    .select("volunteer_id, start_time, end_time")
+    .eq("day_order", dayOrder);
+  if (shiftsError) throw new Error(shiftsError.message);
+  if (!shifts || shifts.length === 0) return [];
+
+  const volunteerIds = [...new Set(shifts.map((s) => s.volunteer_id).filter(Boolean))] as string[];
+  const { data: volunteers, error: volunteersError } = await supabaseServer
+    .from("volunteers")
+    .select("id, full_name, phone, email, team")
+    .in("id", volunteerIds);
+  if (volunteersError) throw new Error(volunteersError.message);
+
+  const { data: covering, error: coveringError } = await supabaseServer
+    .from("room_sessions")
+    .select("id, room, company, time_label, covering_volunteer_id")
+    .eq("day_order", dayOrder)
+    .not("covering_volunteer_id", "is", null);
+  if (coveringError) throw new Error(coveringError.message);
+
+  const coveringByVolunteer = new Map(
+    (covering ?? []).map((c) => [
+      c.covering_volunteer_id as string,
+      { roomSessionId: c.id, company: c.company, room: c.room, time_label: c.time_label },
+    ])
+  );
+
+  const shiftsByVolunteer = new Map<string, { start_time: string | null; end_time: string | null }[]>();
+  for (const s of shifts) {
+    if (!s.volunteer_id) continue;
+    if (!shiftsByVolunteer.has(s.volunteer_id)) shiftsByVolunteer.set(s.volunteer_id, []);
+    shiftsByVolunteer.get(s.volunteer_id)!.push({ start_time: s.start_time, end_time: s.end_time });
+  }
+
+  return (volunteers ?? [])
+    .map((v) => ({
+      ...v,
+      shiftRanges: shiftsByVolunteer.get(v.id) ?? [],
+      covering: coveringByVolunteer.get(v.id) ?? null,
+    }))
+    .sort((a, b) => a.full_name.localeCompare(b.full_name));
 }
 
 export async function getPartnerRoomSessions(volunteerId: string): Promise<RoomSession[]> {

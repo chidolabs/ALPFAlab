@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, LayoutGrid, PhoneCall, UserRound, Users } from "lucide-react";
+import { CalendarDays, LayoutGrid, PhoneCall, Table2, UserRound, Users } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const TABS = [
-  { href: "/", label: "My Info", icon: UserRound },
+  { href: "/", label: "Rooms", icon: Table2 },
+  { href: "/me", label: "My Info", icon: UserRound },
   { href: "/schedule", label: "Schedule", icon: CalendarDays },
   { href: "/directory", label: "Directory", icon: Users },
   { href: "/conference", label: "Sessions", icon: LayoutGrid },

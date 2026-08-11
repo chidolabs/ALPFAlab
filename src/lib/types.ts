@@ -81,6 +81,19 @@ export type RoomSession = {
   time_order: number | null;
   company: string;
   cpe: boolean;
+  covering_volunteer_id: string | null;
+  covering_volunteer: { id: string; full_name: string; phone: string | null; email: string | null } | null;
+  covering_volunteer_name: string | null;
+};
+
+export type DayVolunteer = {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  email: string | null;
+  team: string | null;
+  shiftRanges: { start_time: string | null; end_time: string | null }[];
+  covering: { roomSessionId: string; company: string; room: string; time_label: string | null } | null;
 };
 
 export type ConfSession = {

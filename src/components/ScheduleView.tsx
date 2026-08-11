@@ -136,7 +136,7 @@ export default function ScheduleView() {
       )}
 
       {hasCpe && !isPending && (
-        <p className="rounded-lg bg-fuchsia-50 px-3 py-2 text-xs text-fuchsia-800 dark:bg-fuchsia-950 dark:text-fuchsia-300">
+        <p className="rounded-lg bg-purple-50 px-3 py-2 text-xs text-purple-800 dark:bg-purple-950 dark:text-purple-300">
           {CPE_DISCLAIMER}
         </p>
       )}
@@ -156,7 +156,7 @@ export default function ScheduleView() {
                   {s.company} &middot; {s.day_label} {s.time_label} &middot; {s.room}
                 </span>
                 {s.cpe && (
-                  <span className="shrink-0 rounded-full bg-fuchsia-100 px-2 py-0.5 text-[10px] font-medium text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-300">
+                  <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700 dark:bg-purple-950 dark:text-purple-300">
                     CPE
                   </span>
                 )}
@@ -241,7 +241,7 @@ function ShiftCard({ shift: s, highlight }: { shift: ShiftWithPartners; highligh
                 {p.company} &middot; {p.room} &middot; {p.time_label}
               </span>
               {p.cpe && (
-                <span className="shrink-0 rounded-full bg-fuchsia-100 px-2 py-0.5 text-[10px] font-medium text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-300">
+                <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700 dark:bg-purple-950 dark:text-purple-300">
                   CPE
                 </span>
               )}

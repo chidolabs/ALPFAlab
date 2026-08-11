@@ -85,8 +85,16 @@ create table if not exists room_sessions (
   time_order int,
   company text not null,
   cpe boolean not null default false,
+  covering_volunteer_id uuid references volunteers(id) on delete set null,
+  covering_volunteer_name text,
   created_at timestamptz not null default now()
 );
+
+-- Table already existed before covering_volunteer_id was added; this is a
+-- no-op if the column is already there (needed since the table above uses
+-- "create table if not exists", which won't alter an existing table).
+alter table room_sessions add column if not exists covering_volunteer_id uuid references volunteers(id) on delete set null;
+alter table room_sessions add column if not exists covering_volunteer_name text;
 
 create index if not exists shifts_volunteer_id_idx on shifts(volunteer_id);
 create index if not exists partnership_assignments_volunteer_id_idx on partnership_assignments(volunteer_id);
