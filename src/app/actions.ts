@@ -252,15 +252,11 @@ export async function getVolunteersActiveOnDay(dayOrder: number): Promise<DayVol
 }
 
 export async function getPartnerRoomSessions(volunteerId: string): Promise<RoomSession[]> {
-  const { data: assignments, error: assignmentsError } = await supabaseServer
-    .from("partnership_assignments")
-    .select("sponsor_company")
-    .eq("volunteer_id", volunteerId);
-  if (assignmentsError) throw new Error(assignmentsError.message);
-  if (!assignments || assignments.length === 0) return [];
-
+  // Reads covering_volunteer_id directly (not partnership_assignments) so
+  // any assignment made in the admin coverage tool - not just the original
+  // partner-lead bootstrap - shows up on that volunteer's own schedule.
   const sessions = await getRoomSessions();
-  return sessions.filter((s) => assignments.some((a) => companiesMatch(a.sponsor_company, s.company)));
+  return sessions.filter((s) => s.covering_volunteer_id === volunteerId);
 }
 
 export async function getConfSchedule(): Promise<ConfSession[]> {
