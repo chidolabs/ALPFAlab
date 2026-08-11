@@ -127,15 +127,19 @@ export default function RoomCoverageAdmin() {
     return [...overlapping, ...others];
   }
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, RoomSession[]>();
-    for (const s of sessions) {
-      if (s.day_order !== activeDay) continue;
-      const key = s.time_label ?? "Other";
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(s);
+  const { rooms, times, cellMap } = useMemo(() => {
+    const daySessions = sessions.filter((s) => s.day_order === activeDay);
+    const roomSet = new Set<string>();
+    const timeMap = new Map<string, number>();
+    const map = new Map<string, RoomSession>();
+    for (const s of daySessions) {
+      roomSet.add(s.room);
+      if (s.time_label != null) timeMap.set(s.time_label, s.time_order ?? 0);
+      map.set(`${s.room}__${s.time_label}`, s);
     }
-    return [...map.entries()];
+    const rooms = [...roomSet].sort();
+    const times = [...timeMap.entries()].sort((a, b) => a[1] - b[1]).map(([label]) => label);
+    return { rooms, times, cellMap: map };
   }, [sessions, activeDay]);
 
   return (
@@ -163,91 +167,111 @@ export default function RoomCoverageAdmin() {
 
       {isPending && <p className="text-sm text-slate-500 dark:text-slate-400">Loading...</p>}
 
-      <div className="flex flex-col gap-4">
-        {grouped.map(([time, timeSessions]) => (
-          <div key={time} className="flex flex-col gap-2">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{time}</h3>
-            {timeSessions.map((s) => {
-              const pool = poolFor(s);
-              const suggested = !s.covering_volunteer_id && !s.covering_volunteer_name ? suggestedLead(s.company) : null;
-              const selectValue = s.covering_volunteer_id
-                ? s.covering_volunteer_id
-                : otherOpen[s.id] || s.covering_volunteer_name
-                  ? OTHER_VALUE
-                  : "";
-              return (
-                <div
-                  key={s.id}
-                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <table className="text-left text-xs">
+          <thead>
+            <tr className="border-b border-slate-200 dark:border-slate-800">
+              <th className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                Room
+              </th>
+              {times.map((t) => (
+                <th
+                  key={t}
+                  className="whitespace-nowrap px-3 py-2 font-medium text-slate-700 dark:text-slate-300"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-slate-900 dark:text-slate-100">{s.company}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{s.room}</p>
-                    </div>
-                    {s.cpe && (
-                      <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700 dark:bg-purple-950 dark:text-purple-300">
-                        CPE
-                      </span>
-                    )}
-                  </div>
+                  {t}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rooms.map((room) => (
+              <tr key={room} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-3 py-2 font-medium text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+                  {room}
+                </td>
+                {times.map((t) => {
+                  const s = cellMap.get(`${room}__${t}`);
+                  if (!s) {
+                    return (
+                      <td key={t} className="px-3 py-2 align-top text-slate-300 dark:text-slate-700">
+                        &mdash;
+                      </td>
+                    );
+                  }
 
-                  <div className="mt-2">
-                    {s.covering_volunteer ? (
-                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                        Covered by {s.covering_volunteer.full_name}
-                      </p>
-                    ) : s.covering_volunteer_name ? (
-                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                        Covered by {s.covering_volunteer_name} (not on roster)
-                      </p>
-                    ) : (
-                      <p className="text-sm font-medium text-amber-700 dark:text-amber-400">Unassigned</p>
-                    )}
-                    {suggested && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Suggested (partner lead): {suggested.full_name}
-                      </p>
-                    )}
-                  </div>
+                  const pool = poolFor(s);
+                  const suggested =
+                    !s.covering_volunteer_id && !s.covering_volunteer_name ? suggestedLead(s.company) : null;
+                  const selectValue = s.covering_volunteer_id
+                    ? s.covering_volunteer_id
+                    : otherOpen[s.id] || s.covering_volunteer_name
+                      ? OTHER_VALUE
+                      : "";
 
-                  <select
-                    value={selectValue}
-                    onChange={(e) => handleSelectChange(s.id, e.target.value)}
-                    className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                  >
-                    <option value="">— Unassigned —</option>
-                    {pool.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.full_name}
-                      </option>
-                    ))}
-                    <option value={OTHER_VALUE}>— Volunteer not on list —</option>
-                  </select>
+                  return (
+                    <td key={t} className="min-w-[180px] px-3 py-2 align-top">
+                      <p className="font-medium text-slate-900 dark:text-slate-100">
+                        {s.company}
+                        {s.cpe && (
+                          <span className="ml-1 rounded-full bg-purple-100 px-1.5 py-0.5 text-[9px] font-medium text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                            CPE
+                          </span>
+                        )}
+                      </p>
 
-                  {selectValue === OTHER_VALUE && (
-                    <div className="mt-2 flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="Type a name"
-                        defaultValue={s.covering_volunteer_name ?? ""}
-                        onChange={(e) => setOtherDraft((prev) => ({ ...prev, [s.id]: e.target.value }))}
-                        className="flex-1 rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleSaveOther(s.id)}
-                        className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white"
+                      {s.covering_volunteer ? (
+                        <p className="text-emerald-700 dark:text-emerald-400">{s.covering_volunteer.full_name}</p>
+                      ) : s.covering_volunteer_name ? (
+                        <p className="text-emerald-700 dark:text-emerald-400">
+                          {s.covering_volunteer_name} (not on roster)
+                        </p>
+                      ) : (
+                        <p className="text-amber-700 dark:text-amber-400">Unassigned</p>
+                      )}
+                      {suggested && (
+                        <p className="text-slate-500 dark:text-slate-400">Suggested: {suggested.full_name}</p>
+                      )}
+
+                      <select
+                        value={selectValue}
+                        onChange={(e) => handleSelectChange(s.id, e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                       >
-                        Save
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
+                        <option value="">— Unassigned —</option>
+                        {pool.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.full_name}
+                          </option>
+                        ))}
+                        <option value={OTHER_VALUE}>— Not on list —</option>
+                      </select>
+
+                      {selectValue === OTHER_VALUE && (
+                        <div className="mt-1 flex gap-1">
+                          <input
+                            type="text"
+                            placeholder="Type a name"
+                            defaultValue={s.covering_volunteer_name ?? ""}
+                            onChange={(e) => setOtherDraft((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                            className="w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveOther(s.id)}
+                            className="shrink-0 rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {activeDay != null && (

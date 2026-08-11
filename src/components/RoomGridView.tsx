@@ -1,8 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getVolunteersActiveOnDay } from "@/app/actions";
 import { getTodayDayOrder } from "@/lib/eventDates";
-import type { RoomSession } from "@/lib/types";
+import { formatPhone, telHref } from "@/lib/format";
+import type { DayVolunteer, RoomSession } from "@/lib/types";
+
+const PARTNERSHIP_TEAM = "Partnership Support";
 
 export default function RoomGridView({ data, lastUpdated }: { data: RoomSession[]; lastUpdated: string }) {
   const days = useMemo(() => {
@@ -18,6 +22,28 @@ export default function RoomGridView({ data, lastUpdated }: { data: RoomSession[
     return today != null && data.some((s) => s.day_order === today) ? today : (days[0]?.[0] ?? null);
   });
   const selectedDay = activeDay ?? days[0]?.[0] ?? null;
+
+  const [dayVolunteers, setDayVolunteers] = useState<DayVolunteer[]>([]);
+
+  useEffect(() => {
+    if (selectedDay == null) return;
+    let cancelled = false;
+    getVolunteersActiveOnDay(selectedDay)
+      .then((result) => {
+        if (!cancelled) setDayVolunteers(result);
+      })
+      .catch(() => {
+        if (!cancelled) setDayVolunteers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDay]);
+
+  const available = useMemo(
+    () => dayVolunteers.filter((v) => v.team === PARTNERSHIP_TEAM && !v.covering),
+    [dayVolunteers]
+  );
 
   const { rooms, times, cellMap } = useMemo(() => {
     const daySessions = data.filter((s) => s.day_order === selectedDay);
@@ -127,6 +153,29 @@ export default function RoomGridView({ data, lastUpdated }: { data: RoomSession[
           </tbody>
         </table>
       </div>
+
+      {available.length > 0 && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
+          <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+            Available for rover / other assignments ({available.length})
+          </p>
+          <p className="mt-0.5 text-xs text-blue-700 dark:text-blue-400">
+            Partnership Support volunteers on shift today with no room assigned yet.
+          </p>
+          <div className="mt-2 flex flex-col gap-1.5">
+            {available.map((v) => (
+              <div key={v.id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="text-blue-900 dark:text-blue-200">{v.full_name}</span>
+                {v.phone && telHref(v.phone) && (
+                  <a href={telHref(v.phone)!} className="text-blue-700 dark:text-blue-400">
+                    {formatPhone(v.phone)}
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
