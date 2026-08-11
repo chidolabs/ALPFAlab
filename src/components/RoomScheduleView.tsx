@@ -41,6 +41,12 @@ export default function RoomScheduleView({ data }: { data: RoomSession[] }) {
                           {s.covering_volunteer?.full_name ?? s.covering_volunteer_name}
                         </span>
                       )}
+                      {(s.support_volunteer || s.support_volunteer_name) && (
+                        <span className="text-emerald-600 dark:text-emerald-500">
+                          {" + "}
+                          {s.support_volunteer?.full_name ?? s.support_volunteer_name}
+                        </span>
+                      )}
                     </span>
                     {s.cpe && (
                       <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700 dark:bg-purple-950 dark:text-purple-300">

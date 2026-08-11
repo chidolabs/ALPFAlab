@@ -131,7 +131,7 @@ export default function ScheduleView() {
           <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
             {upNext.status === "now" ? "Happening now" : "Up next"}
           </p>
-          <ShiftCard shift={upNext.shift} highlight />
+          <ShiftCard shift={upNext.shift} volunteerId={selectedId} highlight />
         </div>
       )}
 
@@ -154,6 +154,7 @@ export default function ScheduleView() {
               <div key={s.id} className="flex items-center justify-between gap-2 text-sm">
                 <span className="text-amber-900 dark:text-amber-200">
                   {s.company} &middot; {s.day_label} {s.time_label} &middot; {s.room}
+                  {s.support_volunteer_id === selectedId && " (support)"}
                 </span>
                 {s.cpe && (
                   <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700 dark:bg-purple-950 dark:text-purple-300">
@@ -200,7 +201,7 @@ export default function ScheduleView() {
         <div key={day} className="flex flex-col gap-2">
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{day}</h3>
           {dayShifts.map((s) => (
-            <ShiftCard key={s.id} shift={s} />
+            <ShiftCard key={s.id} shift={s} volunteerId={selectedId} />
           ))}
         </div>
       ))}
@@ -208,7 +209,15 @@ export default function ScheduleView() {
   );
 }
 
-function ShiftCard({ shift: s, highlight }: { shift: ShiftWithPartners; highlight?: boolean }) {
+function ShiftCard({
+  shift: s,
+  volunteerId,
+  highlight,
+}: {
+  shift: ShiftWithPartners;
+  volunteerId: string;
+  highlight?: boolean;
+}) {
   return (
     <div
       className={`rounded-xl border p-4 shadow-sm ${
@@ -239,6 +248,7 @@ function ShiftCard({ shift: s, highlight }: { shift: ShiftWithPartners; highligh
               <span className="flex items-center gap-1 text-blue-700 dark:text-blue-400">
                 <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
                 {p.company} &middot; {p.room} &middot; {p.time_label}
+                {p.support_volunteer_id === volunteerId && " (support)"}
               </span>
               {p.cpe && (
                 <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700 dark:bg-purple-950 dark:text-purple-300">

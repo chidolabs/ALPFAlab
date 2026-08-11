@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { getPartnershipLeads, getRoomSessions, getVolunteersActiveOnDay } from "@/app/actions";
-import { assignRoomCoverageFreeName, assignRoomCoverageVolunteer } from "@/app/admin/actions";
+import {
+  assignRoomCoverageFreeName,
+  assignRoomCoverageVolunteer,
+  assignRoomSupportFreeName,
+  assignRoomSupportVolunteer,
+} from "@/app/admin/actions";
 import { companiesMatch } from "@/lib/company";
 import { formatTime } from "@/lib/format";
 import { getTodayDayOrder, timeStringToMinutes } from "@/lib/eventDates";
@@ -18,8 +23,6 @@ export default function RoomCoverageAdmin() {
   const [activeDay, setActiveDay] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [otherOpen, setOtherOpen] = useState<Record<string, boolean>>({});
-  const [otherDraft, setOtherDraft] = useState<Record<string, string>>({});
 
   const days = useMemo(() => {
     const map = new Map<number, string>();
@@ -75,36 +78,6 @@ export default function RoomCoverageAdmin() {
         setDayVolunteers(volunteerResult);
       } catch {
         setError("Could not refresh.");
-      }
-    });
-  }
-
-  function handleSelectChange(roomSessionId: string, value: string) {
-    setError(null);
-    if (value === OTHER_VALUE) {
-      setOtherOpen((prev) => ({ ...prev, [roomSessionId]: true }));
-      return;
-    }
-    setOtherOpen((prev) => ({ ...prev, [roomSessionId]: false }));
-    startTransition(async () => {
-      try {
-        await assignRoomCoverageVolunteer(roomSessionId, value || null);
-        refresh();
-      } catch {
-        setError("Could not update assignment.");
-      }
-    });
-  }
-
-  function handleSaveOther(roomSessionId: string) {
-    setError(null);
-    startTransition(async () => {
-      try {
-        await assignRoomCoverageFreeName(roomSessionId, otherDraft[roomSessionId] ?? "");
-        setOtherOpen((prev) => ({ ...prev, [roomSessionId]: false }));
-        refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Could not save name.");
       }
     });
   }
@@ -203,14 +176,9 @@ export default function RoomCoverageAdmin() {
                   const pool = poolFor(s);
                   const suggested =
                     !s.covering_volunteer_id && !s.covering_volunteer_name ? suggestedLead(s.company) : null;
-                  const selectValue = s.covering_volunteer_id
-                    ? s.covering_volunteer_id
-                    : otherOpen[s.id] || s.covering_volunteer_name
-                      ? OTHER_VALUE
-                      : "";
 
                   return (
-                    <td key={t} className="min-w-[180px] px-3 py-2 align-top">
+                    <td key={t} className="min-w-[200px] px-3 py-2 align-top">
                       <p className="font-medium text-slate-900 dark:text-slate-100">
                         {s.company}
                         {s.cpe && (
@@ -233,38 +201,76 @@ export default function RoomCoverageAdmin() {
                         <p className="text-slate-500 dark:text-slate-400">Suggested: {suggested.full_name}</p>
                       )}
 
-                      <select
-                        value={selectValue}
-                        onChange={(e) => handleSelectChange(s.id, e.target.value)}
-                        className="mt-1 w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                      >
-                        <option value="">— Unassigned —</option>
-                        {pool.map((v) => (
-                          <option key={v.id} value={v.id}>
-                            {v.full_name}
-                          </option>
-                        ))}
-                        <option value={OTHER_VALUE}>— Not on list —</option>
-                      </select>
+                      <AssignControl
+                        pool={pool}
+                        currentId={s.covering_volunteer_id}
+                        currentFreeName={s.covering_volunteer_name}
+                        onAssignVolunteer={(id) =>
+                          startTransition(async () => {
+                            setError(null);
+                            try {
+                              await assignRoomCoverageVolunteer(s.id, id);
+                              refresh();
+                            } catch {
+                              setError("Could not update assignment.");
+                            }
+                          })
+                        }
+                        onAssignFreeName={(name) =>
+                          startTransition(async () => {
+                            setError(null);
+                            try {
+                              await assignRoomCoverageFreeName(s.id, name);
+                              refresh();
+                            } catch (err) {
+                              setError(err instanceof Error ? err.message : "Could not save name.");
+                            }
+                          })
+                        }
+                      />
 
-                      {selectValue === OTHER_VALUE && (
-                        <div className="mt-1 flex gap-1">
-                          <input
-                            type="text"
-                            placeholder="Type a name"
-                            defaultValue={s.covering_volunteer_name ?? ""}
-                            onChange={(e) => setOtherDraft((prev) => ({ ...prev, [s.id]: e.target.value }))}
-                            className="w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleSaveOther(s.id)}
-                            className="shrink-0 rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white"
-                          >
-                            Save
-                          </button>
-                        </div>
-                      )}
+                      <div className="mt-2 border-t border-dashed border-slate-200 pt-1.5 dark:border-slate-700">
+                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                          Additional support
+                        </p>
+                        {s.support_volunteer ? (
+                          <p className="text-emerald-700 dark:text-emerald-400">
+                            {s.support_volunteer.full_name}
+                          </p>
+                        ) : s.support_volunteer_name ? (
+                          <p className="text-emerald-700 dark:text-emerald-400">
+                            {s.support_volunteer_name} (not on roster)
+                          </p>
+                        ) : null}
+                        <AssignControl
+                          pool={pool}
+                          currentId={s.support_volunteer_id}
+                          currentFreeName={s.support_volunteer_name}
+                          placeholder="— None —"
+                          onAssignVolunteer={(id) =>
+                            startTransition(async () => {
+                              setError(null);
+                              try {
+                                await assignRoomSupportVolunteer(s.id, id);
+                                refresh();
+                              } catch {
+                                setError("Could not update assignment.");
+                              }
+                            })
+                          }
+                          onAssignFreeName={(name) =>
+                            startTransition(async () => {
+                              setError(null);
+                              try {
+                                await assignRoomSupportFreeName(s.id, name);
+                                refresh();
+                              } catch (err) {
+                                setError(err instanceof Error ? err.message : "Could not save name.");
+                              }
+                            })
+                          }
+                        />
+                      </div>
                     </td>
                   );
                 })}
@@ -301,7 +307,10 @@ export default function RoomCoverageAdmin() {
                       {v.covering.length > 0 ? (
                         <span className="text-emerald-700 dark:text-emerald-400">
                           {v.covering
-                            .map((c) => `${c.company} @ ${c.room} (${c.time_label})`)
+                            .map(
+                              (c) =>
+                                `${c.company} @ ${c.room} (${c.time_label})${c.role === "support" ? " [support]" : ""}`
+                            )
                             .join(", ")}
                         </span>
                       ) : (
@@ -316,5 +325,73 @@ export default function RoomCoverageAdmin() {
         </div>
       )}
     </div>
+  );
+}
+
+function AssignControl({
+  pool,
+  currentId,
+  currentFreeName,
+  placeholder = "— Unassigned —",
+  onAssignVolunteer,
+  onAssignFreeName,
+}: {
+  pool: DayVolunteer[];
+  currentId: string | null;
+  currentFreeName: string | null;
+  placeholder?: string;
+  onAssignVolunteer: (id: string | null) => void;
+  onAssignFreeName: (name: string) => void;
+}) {
+  const [otherOpen, setOtherOpen] = useState(false);
+  const [draft, setDraft] = useState(currentFreeName ?? "");
+
+  const selectValue = currentId ? currentId : otherOpen || currentFreeName ? OTHER_VALUE : "";
+
+  return (
+    <>
+      <select
+        value={selectValue}
+        onChange={(e) => {
+          if (e.target.value === OTHER_VALUE) {
+            setOtherOpen(true);
+            return;
+          }
+          setOtherOpen(false);
+          onAssignVolunteer(e.target.value || null);
+        }}
+        className="mt-1 w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+      >
+        <option value="">{placeholder}</option>
+        {pool.map((v) => (
+          <option key={v.id} value={v.id}>
+            {v.full_name}
+          </option>
+        ))}
+        <option value={OTHER_VALUE}>— Not on list —</option>
+      </select>
+
+      {selectValue === OTHER_VALUE && (
+        <div className="mt-1 flex gap-1">
+          <input
+            type="text"
+            placeholder="Type a name"
+            defaultValue={currentFreeName ?? ""}
+            onChange={(e) => setDraft(e.target.value)}
+            className="w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              onAssignFreeName(draft);
+              setOtherOpen(false);
+            }}
+            className="shrink-0 rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white"
+          >
+            Save
+          </button>
+        </div>
+      )}
+    </>
   );
 }

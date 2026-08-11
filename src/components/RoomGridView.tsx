@@ -158,6 +158,11 @@ export default function RoomGridView({ data, lastUpdated }: { data: RoomSession[
                           ) : (
                             <p className="text-amber-700 dark:text-amber-400">Unassigned</p>
                           )}
+                          {(cell.support_volunteer || cell.support_volunteer_name) && (
+                            <p className="text-emerald-600 dark:text-emerald-500">
+                              + {cell.support_volunteer?.full_name ?? cell.support_volunteer_name}
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <span className="text-slate-300 dark:text-slate-700">&mdash;</span>
@@ -168,41 +173,39 @@ export default function RoomGridView({ data, lastUpdated }: { data: RoomSession[
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
+              <td className="sticky left-0 z-10 whitespace-nowrap bg-blue-50 px-3 py-2 align-top font-medium text-blue-900 dark:bg-blue-950 dark:text-blue-200">
+                Available to help
+              </td>
+              {availableByBlock.map(([timeLabel, names]) => (
+                <td key={timeLabel} className="min-w-[140px] px-3 py-2 align-top">
+                  <details>
+                    <summary className="cursor-pointer text-blue-800 dark:text-blue-300">
+                      {names.length}
+                    </summary>
+                    {names.length === 0 ? (
+                      <p className="mt-1 text-blue-600 dark:text-blue-400">Everyone assigned</p>
+                    ) : (
+                      <div className="mt-1 flex flex-col gap-1">
+                        {names.map((v) => (
+                          <div key={v.id} className="flex flex-col">
+                            <span className="text-blue-900 dark:text-blue-200">{v.full_name}</span>
+                            {v.phone && telHref(v.phone) && (
+                              <a href={telHref(v.phone)!} className="text-blue-700 dark:text-blue-400">
+                                {formatPhone(v.phone)}
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </details>
+                </td>
+              ))}
+            </tr>
+          </tfoot>
         </table>
-      </div>
-
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
-        <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
-          Available for rover / other assignments
-        </p>
-        <p className="mt-0.5 text-xs text-blue-700 dark:text-blue-400">
-          Partnership Support volunteers on shift with no room assigned, by time block.
-        </p>
-        <div className="mt-3 flex flex-col gap-3">
-          {availableByBlock.map(([timeLabel, names]) => (
-            <div key={timeLabel}>
-              <p className="text-xs font-semibold text-blue-800 dark:text-blue-300">
-                {timeLabel} ({names.length})
-              </p>
-              {names.length === 0 ? (
-                <p className="text-xs text-blue-600 dark:text-blue-400">Everyone assigned</p>
-              ) : (
-                <div className="mt-1 flex flex-col gap-1">
-                  {names.map((v) => (
-                    <div key={v.id} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="text-blue-900 dark:text-blue-200">{v.full_name}</span>
-                      {v.phone && telHref(v.phone) && (
-                        <a href={telHref(v.phone)!} className="text-blue-700 dark:text-blue-400">
-                          {formatPhone(v.phone)}
-                        </a>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );

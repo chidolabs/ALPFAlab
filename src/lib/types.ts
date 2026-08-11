@@ -84,6 +84,9 @@ export type RoomSession = {
   covering_volunteer_id: string | null;
   covering_volunteer: { id: string; full_name: string; phone: string | null; email: string | null } | null;
   covering_volunteer_name: string | null;
+  support_volunteer_id: string | null;
+  support_volunteer: { id: string; full_name: string; phone: string | null; email: string | null } | null;
+  support_volunteer_name: string | null;
 };
 
 export type DayVolunteer = {
@@ -93,7 +96,13 @@ export type DayVolunteer = {
   email: string | null;
   team: string | null;
   shiftRanges: { start_time: string | null; end_time: string | null }[];
-  covering: { roomSessionId: string; company: string; room: string; time_label: string | null }[];
+  covering: {
+    roomSessionId: string;
+    company: string;
+    room: string;
+    time_label: string | null;
+    role: "lead" | "support";
+  }[];
 };
 
 export type ConfSession = {

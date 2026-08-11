@@ -181,7 +181,7 @@ export async function getRoomSessions(): Promise<RoomSession[]> {
   const { data, error } = await supabaseServer
     .from("room_sessions")
     .select(
-      "id, room, capacity, day_order, day_label, time_label, time_order, company, cpe, covering_volunteer_id, covering_volunteer_name"
+      "id, room, capacity, day_order, day_label, time_label, time_order, company, cpe, covering_volunteer_id, covering_volunteer_name, support_volunteer_id, support_volunteer_name"
     )
     .order("day_order", { ascending: true })
     .order("time_order", { ascending: true })
@@ -189,7 +189,11 @@ export async function getRoomSessions(): Promise<RoomSession[]> {
   if (error) throw new Error(error.message);
   const sessions = data ?? [];
 
-  const volunteerIds = [...new Set(sessions.map((s) => s.covering_volunteer_id).filter(Boolean))];
+  const volunteerIds = [
+    ...new Set(
+      sessions.flatMap((s) => [s.covering_volunteer_id, s.support_volunteer_id]).filter(Boolean)
+    ),
+  ];
   let volunteerMap = new Map<string, { id: string; full_name: string; phone: string | null; email: string | null }>();
   if (volunteerIds.length > 0) {
     const { data: vols, error: volsError } = await supabaseServer
@@ -203,6 +207,7 @@ export async function getRoomSessions(): Promise<RoomSession[]> {
   return sessions.map((s) => ({
     ...s,
     covering_volunteer: s.covering_volunteer_id ? volunteerMap.get(s.covering_volunteer_id) ?? null : null,
+    support_volunteer: s.support_volunteer_id ? volunteerMap.get(s.support_volunteer_id) ?? null : null,
   }));
 }
 
@@ -223,21 +228,24 @@ export async function getVolunteersActiveOnDay(dayOrder: number): Promise<DayVol
 
   const { data: covering, error: coveringError } = await supabaseServer
     .from("room_sessions")
-    .select("id, room, company, time_label, covering_volunteer_id")
+    .select("id, room, company, time_label, covering_volunteer_id, support_volunteer_id")
     .eq("day_order", dayOrder)
-    .not("covering_volunteer_id", "is", null);
+    .or("covering_volunteer_id.not.is.null,support_volunteer_id.not.is.null");
   if (coveringError) throw new Error(coveringError.message);
 
   const coveringByVolunteer = new Map<
     string,
-    { roomSessionId: string; company: string; room: string; time_label: string | null }[]
+    { roomSessionId: string; company: string; room: string; time_label: string | null; role: "lead" | "support" }[]
   >();
   for (const c of covering ?? []) {
-    const volunteerId = c.covering_volunteer_id as string;
-    if (!coveringByVolunteer.has(volunteerId)) coveringByVolunteer.set(volunteerId, []);
-    coveringByVolunteer
-      .get(volunteerId)!
-      .push({ roomSessionId: c.id, company: c.company, room: c.room, time_label: c.time_label });
+    const entry = (volunteerId: string, role: "lead" | "support") => {
+      if (!coveringByVolunteer.has(volunteerId)) coveringByVolunteer.set(volunteerId, []);
+      coveringByVolunteer
+        .get(volunteerId)!
+        .push({ roomSessionId: c.id, company: c.company, room: c.room, time_label: c.time_label, role });
+    };
+    if (c.covering_volunteer_id) entry(c.covering_volunteer_id, "lead");
+    if (c.support_volunteer_id) entry(c.support_volunteer_id, "support");
   }
 
   const shiftsByVolunteer = new Map<string, { start_time: string | null; end_time: string | null }[]>();
@@ -257,11 +265,14 @@ export async function getVolunteersActiveOnDay(dayOrder: number): Promise<DayVol
 }
 
 export async function getPartnerRoomSessions(volunteerId: string): Promise<RoomSession[]> {
-  // Reads covering_volunteer_id directly (not partnership_assignments) so
-  // any assignment made in the admin coverage tool - not just the original
-  // partner-lead bootstrap - shows up on that volunteer's own schedule.
+  // Reads covering_volunteer_id / support_volunteer_id directly (not
+  // partnership_assignments) so any assignment made in the admin coverage
+  // tool - lead or support, not just the original partner-lead bootstrap -
+  // shows up on that volunteer's own schedule.
   const sessions = await getRoomSessions();
-  return sessions.filter((s) => s.covering_volunteer_id === volunteerId);
+  return sessions.filter(
+    (s) => s.covering_volunteer_id === volunteerId || s.support_volunteer_id === volunteerId
+  );
 }
 
 export async function getConfSchedule(): Promise<ConfSession[]> {
