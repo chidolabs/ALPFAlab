@@ -9,7 +9,8 @@
     "lint": "eslint",
     "import": "node --env-file=.env.local scripts/import-data.mjs",
     "seed-contacts": "node --env-file=.env.local scripts/seed-contacts.mjs",
-    "seed-rooms": "node --env-file=.env.local scripts/seed-room-sessions.mjs"
+    "seed-rooms": "node --env-file=.env.local scripts/seed-room-sessions.mjs",
+    "auto-assign-coverage": "node --env-file=.env.local scripts/auto-assign-partner-coverage.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.2",
