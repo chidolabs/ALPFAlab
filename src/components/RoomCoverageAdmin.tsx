@@ -298,9 +298,11 @@ export default function RoomCoverageAdmin() {
                         .join(", ")}
                     </td>
                     <td className="px-3 py-2">
-                      {v.covering ? (
+                      {v.covering.length > 0 ? (
                         <span className="text-emerald-700 dark:text-emerald-400">
-                          Assigned: {v.covering.company} @ {v.covering.room}
+                          {v.covering
+                            .map((c) => `${c.company} @ ${c.room} (${c.time_label})`)
+                            .join(", ")}
                         </span>
                       ) : (
                         <span className="text-slate-500 dark:text-slate-400">Available</span>

@@ -228,12 +228,17 @@ export async function getVolunteersActiveOnDay(dayOrder: number): Promise<DayVol
     .not("covering_volunteer_id", "is", null);
   if (coveringError) throw new Error(coveringError.message);
 
-  const coveringByVolunteer = new Map(
-    (covering ?? []).map((c) => [
-      c.covering_volunteer_id as string,
-      { roomSessionId: c.id, company: c.company, room: c.room, time_label: c.time_label },
-    ])
-  );
+  const coveringByVolunteer = new Map<
+    string,
+    { roomSessionId: string; company: string; room: string; time_label: string | null }[]
+  >();
+  for (const c of covering ?? []) {
+    const volunteerId = c.covering_volunteer_id as string;
+    if (!coveringByVolunteer.has(volunteerId)) coveringByVolunteer.set(volunteerId, []);
+    coveringByVolunteer
+      .get(volunteerId)!
+      .push({ roomSessionId: c.id, company: c.company, room: c.room, time_label: c.time_label });
+  }
 
   const shiftsByVolunteer = new Map<string, { start_time: string | null; end_time: string | null }[]>();
   for (const s of shifts) {
@@ -246,7 +251,7 @@ export async function getVolunteersActiveOnDay(dayOrder: number): Promise<DayVol
     .map((v) => ({
       ...v,
       shiftRanges: shiftsByVolunteer.get(v.id) ?? [],
-      covering: coveringByVolunteer.get(v.id) ?? null,
+      covering: coveringByVolunteer.get(v.id) ?? [],
     }))
     .sort((a, b) => a.full_name.localeCompare(b.full_name));
 }

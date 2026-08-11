@@ -93,7 +93,7 @@ export type DayVolunteer = {
   email: string | null;
   team: string | null;
   shiftRanges: { start_time: string | null; end_time: string | null }[];
-  covering: { roomSessionId: string; company: string; room: string; time_label: string | null } | null;
+  covering: { roomSessionId: string; company: string; room: string; time_label: string | null }[];
 };
 
 export type ConfSession = {

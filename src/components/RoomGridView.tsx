@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getVolunteersActiveOnDay } from "@/app/actions";
-import { getTodayDayOrder } from "@/lib/eventDates";
+import { getTodayDayOrder, timeStringToMinutes } from "@/lib/eventDates";
 import { formatPhone, telHref } from "@/lib/format";
 import type { DayVolunteer, RoomSession } from "@/lib/types";
 
@@ -40,12 +40,7 @@ export default function RoomGridView({ data, lastUpdated }: { data: RoomSession[
     };
   }, [selectedDay]);
 
-  const available = useMemo(
-    () => dayVolunteers.filter((v) => v.team === PARTNERSHIP_TEAM && !v.covering),
-    [dayVolunteers]
-  );
-
-  const { rooms, times, cellMap } = useMemo(() => {
+  const { rooms, times, timeOrders, cellMap } = useMemo(() => {
     const daySessions = data.filter((s) => s.day_order === selectedDay);
     const roomSet = new Set<string>();
     const timeMap = new Map<string, number>();
@@ -57,8 +52,30 @@ export default function RoomGridView({ data, lastUpdated }: { data: RoomSession[
     }
     const rooms = [...roomSet].sort();
     const times = [...timeMap.entries()].sort((a, b) => a[1] - b[1]).map(([label]) => label);
-    return { rooms, times, cellMap: map };
+    return { rooms, times, timeOrders: timeMap, cellMap: map };
   }, [data, selectedDay]);
+
+  const partnershipVolunteers = useMemo(
+    () => dayVolunteers.filter((v) => v.team === PARTNERSHIP_TEAM),
+    [dayVolunteers]
+  );
+
+  const availableByBlock = useMemo(() => {
+    return times.map((timeLabel) => {
+      const blockOrder = timeOrders.get(timeLabel) ?? null;
+      const names = partnershipVolunteers.filter((v) => {
+        const onShift = v.shiftRanges.some((r) => {
+          const start = timeStringToMinutes(r.start_time);
+          const end = timeStringToMinutes(r.end_time);
+          return start != null && end != null && blockOrder != null && start <= blockOrder && blockOrder <= end;
+        });
+        if (!onShift) return false;
+        const busyThisBlock = v.covering.some((c) => c.time_label === timeLabel);
+        return !busyThisBlock;
+      });
+      return [timeLabel, names] as const;
+    });
+  }, [times, timeOrders, partnershipVolunteers]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -154,28 +171,39 @@ export default function RoomGridView({ data, lastUpdated }: { data: RoomSession[
         </table>
       </div>
 
-      {available.length > 0 && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
-          <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
-            Available for rover / other assignments ({available.length})
-          </p>
-          <p className="mt-0.5 text-xs text-blue-700 dark:text-blue-400">
-            Partnership Support volunteers on shift today with no room assigned yet.
-          </p>
-          <div className="mt-2 flex flex-col gap-1.5">
-            {available.map((v) => (
-              <div key={v.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="text-blue-900 dark:text-blue-200">{v.full_name}</span>
-                {v.phone && telHref(v.phone) && (
-                  <a href={telHref(v.phone)!} className="text-blue-700 dark:text-blue-400">
-                    {formatPhone(v.phone)}
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
+        <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+          Available for rover / other assignments
+        </p>
+        <p className="mt-0.5 text-xs text-blue-700 dark:text-blue-400">
+          Partnership Support volunteers on shift with no room assigned, by time block.
+        </p>
+        <div className="mt-3 flex flex-col gap-3">
+          {availableByBlock.map(([timeLabel, names]) => (
+            <div key={timeLabel}>
+              <p className="text-xs font-semibold text-blue-800 dark:text-blue-300">
+                {timeLabel} ({names.length})
+              </p>
+              {names.length === 0 ? (
+                <p className="text-xs text-blue-600 dark:text-blue-400">Everyone assigned</p>
+              ) : (
+                <div className="mt-1 flex flex-col gap-1">
+                  {names.map((v) => (
+                    <div key={v.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="text-blue-900 dark:text-blue-200">{v.full_name}</span>
+                      {v.phone && telHref(v.phone) && (
+                        <a href={telHref(v.phone)!} className="text-blue-700 dark:text-blue-400">
+                          {formatPhone(v.phone)}
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }

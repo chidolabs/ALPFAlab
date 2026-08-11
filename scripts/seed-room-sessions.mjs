@@ -107,10 +107,10 @@ const ROWS = [
   ["W207 A", TUESDAY, "3:00 PM", 900, "C Baltimore", false],
 
   ["W207 BC", TUESDAY, "11:00 AM", 660, "Fidelity-Money", false],
-  ["W207 BC", TUESDAY, "3:00 PM", 900, "Ally-Info Session", false],
+  ["W207 BC", TUESDAY, "3:00 PM", 900, "AICPA", false],
 
-  ["W208", TUESDAY, "11:00 AM", 660, "BoA-Legacy", false],
-  ["W208", TUESDAY, "3:00 PM", 900, "FMR", false],
+  ["W208", TUESDAY, "11:00 AM", 660, "Ally-Info Session", false],
+  ["W208", TUESDAY, "3:00 PM", 900, "BoA-Legacy", false],
 
   // Wednesday: 12:00 (top grid only has one Wednesday column)
   ["E217", WEDNESDAY, "12:00 PM", 720, "CLA", false],
@@ -119,6 +119,9 @@ const ROWS = [
   ["E219 BC", WEDNESDAY, "12:00 PM", 720, "C FF", false],
   ["E219 D", WEDNESDAY, "12:00 PM", 720, "LFG PRO", false],
   ["E221 A", WEDNESDAY, "12:00 PM", 720, "C C2C", false],
+  ["W206 B", WEDNESDAY, "12:00 PM", 720, "JPMC", false],
+  ["W207 A", WEDNESDAY, "12:00 PM", 720, "C Equitable", false],
+  ["W208", WEDNESDAY, "12:00 PM", 720, "FMR", false],
 
   // --- Bottom grid: workshops/info sessions/receptions/activations by room ---
   // No CPE shading in this section (all false). Room labels kept exactly as
